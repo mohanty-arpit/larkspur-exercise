@@ -68,14 +68,17 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
     answer = ""
     turns = 1
     while response.stop_reason == "tool_use" and turns < MAX_TOOL_CALLS:
-        messages.append({"role": "assistant", "content": text_of(response)})
+        messages.append({"role": "assistant", "content": response.content })
         messages.append({"role": "user", "content": tool_results(response)})
-        answer = text_of(response)
+       
         response = client.messages.create(
             model=MODEL, max_tokens=4096, system=runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM,
             thinking={"type": "adaptive"}, tools=tools, messages=messages,
         )
+        answer = text_of(response)
         turns += 1
+    
+    answer = text_of(response)
 
     return answer
 
@@ -119,14 +122,36 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
                 "type": "object",
                 "properties": {
                     "flight_no": {"type": "string"},
-                    "date": {"type": "string", "description": "MM/DD/YYYY"},
+                    "date": {"type": "string", "description": "YYYY-MM-DD"},
                 },
                 "required": ["flight_no", "date"],
             },
         },
         {
             "name": "search_alternatives",
-            "description": "search",
+            "description": (
+    "Look up alternative flights for a customer's disrupted booking, using "
+    "Larkspur's live flight data. Returns the available options (flight "
+    "number, departure and arrival times, seat availability, any fare "
+    "difference) the customer can be rebooked onto.\n\n"
+    "When to use: call this immediately, in the same turn, once the booking "
+    "lookup and flight status confirm that a flight on the PNR is cancelled "
+    "or that the customer has missed a connection. Do not wait for the "
+    "customer to ask. Showing options first is the default for these cases. "
+    "If the record has an oddity, such as an old date, search anyway and "
+    "mention the oddity next to the results.\n\n"
+    "When not to use: a delay that policy says does not qualify for a free "
+    "change, a group booking (hand to a human), or a missed connection where "
+    "the customer's account of what happened is too vague to tell which "
+    "flight was missed. In that last case ask one clarifying question "
+    "first.\n\n"
+    "Rules: this tool only searches. It does not hold, change or cancel "
+    "anything. Present only the options returned, exactly as returned. Never "
+    "invent or estimate a flight, time, seat or price. If the result is "
+    "empty or the call fails, say so plainly and offer a handoff to a "
+    "person. Holding a seat on a chosen option is done with a separate tool "
+    "after the customer picks, and any change needs their confirm click."
+),
             "input_schema": {
                 "type": "object",
                 "properties": {"pnr": {"type": "string"}},
