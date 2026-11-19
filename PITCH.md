@@ -8,7 +8,8 @@ Number: 5 of 5 test passengers resolved (clean cancellation, delay under thresho
 Safety check: The loop is capped at 8 tool calls and then a human takes over, and the tool descriptions tell Claude to check flight status and policy before saying anything about timing or entitlement; we have not yet written eval cases to prove this holds on a hard case.
 Next: Write the 3.1 eval cases (starting with the abusive-message and ambiguous-connection tickets) so "it works" is a pass/fail result, not a feeling.
 Still broken: R8KD3F, the abusive-message ticket, gets a calm, normal resolution with no tone handling at all (TONE_ADDENDUM is still empty), and we have no saved eval cases yet, so a regression would go unnoticed.
-Lever: intelligence
+
+Lever: cost
 
 ## Priya asked
 
